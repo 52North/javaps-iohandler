@@ -240,7 +240,7 @@ public class GenericFileData {
         if (unzipIfPossible && extension.contains(ZIP)) {
             try {
                 File tempFile1 = File.createTempFile(UUID.randomUUID().toString(), "");
-                File dir = new File(tempFile1.getParentFile() + "/" + UUID.randomUUID().toString());
+                File dir = new File(tempFile1.getParentFile(), UUID.randomUUID().toString());
                 if (!dir.mkdir()) {
                     String message = COULD_NOT_CREATE_DIRECTORY + dir.getAbsolutePath();
                     LOGGER.error(message);
@@ -251,8 +251,12 @@ public class GenericFileData {
                 ZipEntry entry;
                 while ((entry = zis.getNextEntry()) != null) {
                     LOGGER.debug("Extracting: " + entry);
+                    final File zipEntryFile = new File(dir.getAbsoluteFile(), entry.getName());
+                    if (!zipEntryFile.toPath().normalize().startsWith(dir.getAbsoluteFile().toPath().normalize())) {
+                        throw new IOException("Bad zip entry");
+                    }
                     // write the files to the disk
-                    FileOutputStream fos = new FileOutputStream(dir.getAbsoluteFile() + "/" + entry.getName());
+                    FileOutputStream fos = new FileOutputStream(zipEntryFile);
 
                     IOUtils.copy(zis, fos);
 
